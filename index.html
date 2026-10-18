@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Golazo 26</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Golos+Text:wght@400;500;600;700&family=Oswald:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="game"></canvas>
+  <div id="vignette"></div>
+
+  <!-- ===================== HUD ===================== -->
+  <div id="hud" hidden>
+    <div class="scorebug" id="scorebug">
+      <div class="sb-team sb-home"><i class="sb-kit" id="sb-home-kit"></i><b id="sb-home">HOM</b></div>
+      <div class="sb-score"><span id="sb-hs">0</span><em>–</em><span id="sb-as">0</span></div>
+      <div class="sb-team sb-away"><b id="sb-away">AWY</b><i class="sb-kit" id="sb-away-kit"></i></div>
+      <div class="sb-time"><span id="sb-clock">00:00</span><span id="sb-added" hidden>+0</span></div>
+    </div>
+    <div class="sb-cards" id="sb-events"></div>
+
+    <div id="banner" class="banner" hidden>
+      <div class="banner-kicker" id="banner-kicker"></div>
+      <div class="banner-title" id="banner-title"></div>
+      <div class="banner-sub" id="banner-sub"></div>
+    </div>
+
+    <div id="replay-badge" class="replay-badge" hidden><i></i>ПОВТОР</div>
+    <div id="ai-badge" class="ai-badge" hidden>ИИ управляет игроком</div>
+    <div id="commentary" class="commentary"></div>
+
+    <div id="player-tag" class="player-tag" hidden>
+      <div class="pt-num" id="pt-num">10</div>
+      <div class="pt-info">
+        <div class="pt-name" id="pt-name">Игрок</div>
+        <div class="pt-bar"><i id="pt-stamina"></i></div>
+      </div>
+    </div>
+
+    <div id="hint" class="hint"></div>
+    <div id="shootout" class="shootout" hidden>
+      <div class="so-row"><b id="so-home-name">HOM</b><span id="so-home-dots"></span></div>
+      <div class="so-row"><b id="so-away-name">AWY</b><span id="so-away-dots"></span></div>
+    </div>
+
+    <div id="intro-card" class="intro-card" hidden>
+      <canvas id="intro-crest" width="140" height="160"></canvas>
+      <div class="ic-body">
+        <div class="ic-kicker" id="ic-kicker">Стартовый состав</div>
+        <div class="ic-name" id="ic-name"></div>
+        <div class="ic-formation" id="ic-formation"></div>
+        <ol class="ic-list" id="ic-list"></ol>
+      </div>
+    </div>
+
+    <button id="btn-pause-touch" class="pause-touch" aria-label="Пауза">II</button>
+  </div>
+
+  <!-- Сенсорное управление -->
+  <div id="touch" class="touch" hidden>
+    <div class="stick" id="stick"><i id="stick-knob"></i></div>
+    <div class="tbtns">
+      <button data-k="sprint" class="tb tb-sprint">Спринт</button>
+      <button data-k="switch" class="tb tb-switch">Смена</button>
+      <button data-k="lob" class="tb tb-lob">Навес</button>
+      <button data-k="through" class="tb tb-through">На ход</button>
+      <button data-k="pass" class="tb tb-pass">Пас</button>
+      <button data-k="shoot" class="tb tb-shoot">Удар</button>
+    </div>
+  </div>
+
+  <!-- ===================== ГЛАВНОЕ МЕНЮ ===================== -->
+  <section id="scr-main" class="screen screen-main">
+    <div class="main-wrap">
+      <header class="brand">
+        <div class="brand-kicker">Футбольный симулятор · сезон 2026/27</div>
+        <h1 class="brand-title">GOLAZO<span>26</span></h1>
+        <p class="brand-lead">Настоящие клубы, живой ИИ, режим карьеры «Легенда».</p>
+      </header>
+      <nav class="main-menu" id="main-menu">
+        <button class="menu-item" data-action="quick"><span class="mi-title">Быстрый матч</span><span class="mi-sub">Выберите два клуба и выходите на поле</span></button>
+        <button class="menu-item mi-legend" data-action="legend"><span class="mi-title">Легенда</span><span class="mi-sub">Создайте своего футболиста и постройте карьеру</span></button>
+        <button class="menu-item" data-action="shootout"><span class="mi-title">Серия пенальти</span><span class="mi-sub">Пять ударов, затем до первого промаха</span></button>
+        <button class="menu-item" data-action="records"><span class="mi-title">Рекорды</span><span class="mi-sub">Победы, бомбардиры и лучшие серии</span></button>
+        <button class="menu-item" data-action="controls"><span class="mi-title">Управление</span><span class="mi-sub">Клавиатура, геймпад и сенсорный экран</span></button>
+        <button class="menu-item" data-action="settings"><span class="mi-title">Настройки</span><span class="mi-sub">Сложность, длительность тайма, камера, звук</span></button>
+      </nav>
+      <aside class="main-side" id="main-side"></aside>
+    </div>
+    <footer class="main-foot">↑ ↓ — выбор · Enter — подтвердить · Esc — назад</footer>
+  </section>
+
+  <!-- ===================== ВЫБОР КОМАНД ===================== -->
+  <section id="scr-select" class="screen" hidden>
+    <div class="panel">
+      <div class="panel-head">
+        <button class="back" data-back>← Назад</button>
+        <h2 id="select-title">Быстрый матч</h2>
+      </div>
+      <div class="select-grid">
+        <div class="team-card" id="sel-home">
+          <div class="tc-label">Хозяева</div>
+          <div class="tc-row">
+            <button class="arrow" data-team="home" data-dir="-1" aria-label="Предыдущий клуб">‹</button>
+            <canvas class="crest" width="120" height="140"></canvas>
+            <button class="arrow" data-team="home" data-dir="1" aria-label="Следующий клуб">›</button>
+          </div>
+          <div class="tc-body"></div>
+        </div>
+        <div class="vs-col">
+          <div class="vs">VS</div>
+          <div class="field-label">Вы играете за</div>
+          <div class="seg" id="side-seg">
+            <button data-side="home" class="on">Хозяев</button>
+            <button data-side="away">Гостей</button>
+            <button data-side="none">ИИ vs ИИ</button>
+          </div>
+          <div class="stadium-name" id="sel-stadium"></div>
+          <button class="btn ghost" id="btn-tactics">Тактика и состав</button>
+          <button class="btn primary" id="btn-kickoff">Начать матч</button>
+        </div>
+        <div class="team-card" id="sel-away">
+          <div class="tc-label">Гости</div>
+          <div class="tc-row">
+            <button class="arrow" data-team="away" data-dir="-1" aria-label="Предыдущий клуб">‹</button>
+            <canvas class="crest" width="120" height="140"></canvas>
+            <button class="arrow" data-team="away" data-dir="1" aria-label="Следующий клуб">›</button>
+          </div>
+          <div class="tc-body"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ТАКТИКА ===================== -->
+  <section id="scr-tactics" class="screen" hidden>
+    <div class="panel panel-wide">
+      <div class="panel-head">
+        <button class="back" data-back>← Готово</button>
+        <h2>Тактика и состав</h2>
+        <span class="panel-note" id="tac-team-name"></span>
+      </div>
+      <div class="tactics-grid">
+        <div class="tac-pitch-wrap"><canvas id="tac-pitch" width="420" height="560"></canvas></div>
+        <div class="tac-controls">
+          <label class="field"><span>Схема</span><select id="tac-formation"></select></label>
+          <label class="field"><span>Стиль игры</span><select id="tac-style"></select></label>
+          <label class="field"><span>Линия обороны <output id="tac-line-v"></output></span><input type="range" id="tac-line" min="0" max="100"></label>
+          <label class="field"><span>Ширина атаки <output id="tac-width-v"></output></span><input type="range" id="tac-width" min="0" max="100"></label>
+          <label class="field"><span>Интенсивность прессинга <output id="tac-press-v"></output></span><input type="range" id="tac-press" min="0" max="100"></label>
+          <p class="tac-desc" id="tac-desc"></p>
+        </div>
+        <div class="tac-lineup">
+          <div class="field-label">Состав · нажмите на игрока основы, затем на запасного для замены</div>
+          <div class="lineup" id="tac-lineup"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== РЕКОРДЫ ===================== -->
+  <section id="scr-records" class="screen" hidden>
+    <div class="panel panel-wide">
+      <div class="panel-head">
+        <button class="back" data-back>← Назад</button>
+        <h2>Рекорды</h2>
+        <button class="btn small danger" id="btn-reset-records">Сбросить</button>
+      </div>
+      <div id="records-body" class="records-body"></div>
+    </div>
+  </section>
+
+  <!-- ===================== УПРАВЛЕНИЕ ===================== -->
+  <section id="scr-controls" class="screen" hidden>
+    <div class="panel">
+      <div class="panel-head">
+        <button class="back" data-back>← Назад</button>
+        <h2>Управление</h2>
+      </div>
+      <div class="controls-grid">
+        <table class="ctable">
+          <thead><tr><th>Действие</th><th>Клавиатура</th><th>Геймпад</th></tr></thead>
+          <tbody>
+            <tr><td>Движение</td><td><kbd>W A S D</kbd> / <kbd>←↑→↓</kbd></td><td>Левый стик</td></tr>
+            <tr><td>Спринт</td><td><kbd>Shift</kbd></td><td>RT</td></tr>
+            <tr><td>Короткий пас</td><td><kbd>J</kbd> / <kbd>Пробел</kbd></td><td>A</td></tr>
+            <tr><td>Удар (удерживать для силы)</td><td><kbd>K</kbd></td><td>X</td></tr>
+            <tr><td>Навес / длинный пас</td><td><kbd>L</kbd></td><td>B</td></tr>
+            <tr><td>Пас на ход</td><td><kbd>I</kbd></td><td>Y</td></tr>
+            <tr><td>Финт / рывок с мячом</td><td><kbd>E</kbd></td><td>RB</td></tr>
+            <tr class="sep"><td colspan="3">В обороне</td></tr>
+            <tr><td>Прессинг и отбор</td><td><kbd>J</kbd> (удерживать)</td><td>A</td></tr>
+            <tr><td>Подкат</td><td><kbd>K</kbd></td><td>X</td></tr>
+            <tr><td>Прессинг вторым игроком</td><td><kbd>L</kbd> (удерживать)</td><td>B</td></tr>
+            <tr><td>Смена игрока</td><td><kbd>Q</kbd></td><td>LB</td></tr>
+            <tr class="sep"><td colspan="3">Стандарты и прочее</td></tr>
+            <tr><td>Пенальти: прицел и удар</td><td>Стрелки + <kbd>K</kbd></td><td>Стик + X</td></tr>
+            <tr><td>Пенальти: прыжок вратаря</td><td>Стрелки + <kbd>K</kbd></td><td>Стик + X</td></tr>
+            <tr><td>«Легенда»: попросить пас</td><td><kbd>J</kbd> без мяча</td><td>A</td></tr>
+            <tr><td>Пропустить сцену</td><td><kbd>Enter</kbd></td><td>A</td></tr>
+            <tr><td>Пауза</td><td><kbd>Esc</kbd> / <kbd>P</kbd></td><td>Start</td></tr>
+          </tbody>
+        </table>
+        <div class="controls-note">
+          <h3>Если игрок не на связи</h3>
+          <p>Через 4 секунды без нажатий управление вашим футболистом берёт ИИ и играет по тактике команды. Любая клавиша возвращает контроль.</p>
+          <p>Если геймпад отключился во время матча, игра встаёт на паузу и ждёт переподключения.</p>
+          <h3>Подсказки</h3>
+          <p>Направление при ударе выбирает угол ворот. Слишком долгое удержание <kbd>K</kbd> отправит мяч выше ворот.</p>
+          <p>Нападающие ловят момент паса на ход. Если отдать пас слишком поздно, лайнсмен поднимет флаг.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== НАСТРОЙКИ ===================== -->
+  <section id="scr-settings" class="screen" hidden>
+    <div class="panel">
+      <div class="panel-head">
+        <button class="back" data-back>← Назад</button>
+        <h2>Настройки</h2>
+      </div>
+      <div class="settings-list">
+        <div class="setting"><span>Сложность</span><div class="seg" id="set-diff">
+          <button data-v="0">Любитель</button><button data-v="1">Профи</button><button data-v="2">Мировой класс</button><button data-v="3">Легенда</button></div></div>
+        <div class="setting"><span>Длительность тайма</span><div class="seg" id="set-half">
+          <button data-v="2">2 мин</button><button data-v="3">3 мин</button><button data-v="4">4 мин</button><button data-v="6">6 мин</button></div></div>
+        <div class="setting"><span>Камера</span><div class="seg" id="set-cam">
+          <button data-v="0.85">Широкая</button><button data-v="1">ТВ</button><button data-v="1.2">Близкая</button></div></div>
+        <div class="setting"><span>Звук</span><div class="seg" id="set-sound">
+          <button data-v="1">Вкл</button><button data-v="0">Выкл</button></div></div>
+        <div class="setting"><span>Автосмена игрока</span><div class="seg" id="set-auto">
+          <button data-v="1">Вкл</button><button data-v="0">Выкл</button></div></div>
+        <div class="setting"><span>Имена над игроками</span><div class="seg" id="set-names">
+          <button data-v="1">Вкл</button><button data-v="0">Выкл</button></div></div>
+        <div class="setting"><span>Радар</span><div class="seg" id="set-radar">
+          <button data-v="1">Вкл</button><button data-v="0">Выкл</button></div></div>
+        <div class="setting"><span>Повторы голов</span><div class="seg" id="set-replay">
+          <button data-v="1">Вкл</button><button data-v="0">Выкл</button></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ЛЕГЕНДА: СОЗДАНИЕ ===================== -->
+  <section id="scr-legend-create" class="screen" hidden>
+    <div class="panel panel-wide">
+      <div class="panel-head">
+        <button class="back" data-back>← Назад</button>
+        <h2>Новая легенда</h2>
+      </div>
+      <div class="lc-grid">
+        <div class="lc-preview"><canvas id="lc-canvas" width="320" height="420"></canvas></div>
+        <form class="lc-form" id="lc-form">
+          <label class="field"><span>Имя и фамилия</span><input id="lc-name" maxlength="22" value="Алекс Морозов" autocomplete="off"></label>
+          <div class="lc-two">
+            <label class="field"><span>Сборная</span><select id="lc-nation"></select></label>
+            <label class="field"><span>Позиция</span><select id="lc-pos"></select></label>
+          </div>
+          <div class="lc-two">
+            <label class="field"><span>Номер</span><input id="lc-number" type="number" min="1" max="99" value="27"></label>
+            <label class="field"><span>Рост, см <output id="lc-height-v">182</output></span><input id="lc-height" type="range" min="165" max="200" value="182"></label>
+          </div>
+          <div class="field"><span>Рабочая нога</span><div class="seg" id="lc-foot"><button type="button" data-v="R" class="on">Правая</button><button type="button" data-v="L">Левая</button></div></div>
+          <div class="field"><span>Цвет кожи</span><div class="swatches" id="lc-skin"></div></div>
+          <div class="lc-two">
+            <label class="field"><span>Причёска</span><select id="lc-hair"></select></label>
+            <label class="field"><span>Борода</span><select id="lc-beard"><option value="0">Нет</option><option value="1">Щетина</option><option value="2">Борода</option></select></label>
+          </div>
+          <div class="field"><span>Цвет волос</span><div class="swatches" id="lc-haircol"></div></div>
+          <div class="field"><span>Бутсы</span><div class="swatches" id="lc-boots"></div></div>
+          <label class="field"><span>Первый клуб</span><select id="lc-club"></select></label>
+          <button class="btn primary" id="lc-start" type="submit">Начать карьеру</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ЛЕГЕНДА: ХАБ ===================== -->
+  <section id="scr-legend-hub" class="screen" hidden>
+    <div class="panel panel-wide">
+      <div class="panel-head">
+        <button class="back" data-back>← Меню</button>
+        <h2>Легенда</h2>
+        <span class="panel-note" id="lg-season"></span>
+      </div>
+      <div class="lg-grid">
+        <div class="lg-left">
+          <canvas id="lg-card" width="300" height="420"></canvas>
+          <div class="lg-msg" id="lg-msg"></div>
+        </div>
+        <div class="lg-mid">
+          <div class="lg-next" id="lg-next"></div>
+          <div class="lg-actions">
+            <button class="btn primary" id="lg-play">Играть матч</button>
+            <button class="btn ghost" id="lg-sim">Симулировать</button>
+          </div>
+          <div class="field-label">Турнирная таблица</div>
+          <div class="lg-table" id="lg-table"></div>
+        </div>
+        <div class="lg-right">
+          <div class="tabs" id="lg-tabs">
+            <button data-tab="train" class="on">Развитие</button>
+            <button data-tab="stats">Статистика</button>
+            <button data-tab="offers">Трансферы</button>
+            <button data-tab="trophies">Трофеи</button>
+          </div>
+          <div class="tab-body" id="lg-tab-body"></div>
+          <div class="danger-zone" id="lg-danger">
+            <button class="btn small danger" id="lg-delete">Удалить карьеру</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ПАУЗА ===================== -->
+  <section id="scr-pause" class="screen screen-overlay" hidden>
+    <div class="pause-box">
+      <div class="pause-score" id="pause-score"></div>
+      <nav class="pause-menu" id="pause-menu">
+        <button class="menu-item" data-action="resume"><span class="mi-title">Продолжить</span></button>
+        <button class="menu-item" data-action="tactics"><span class="mi-title">Тактика</span></button>
+        <button class="menu-item" data-action="stats"><span class="mi-title">Статистика матча</span></button>
+        <button class="menu-item" data-action="controls"><span class="mi-title">Управление</span></button>
+        <button class="menu-item" data-action="quit"><span class="mi-title">Выйти в меню</span></button>
+      </nav>
+      <div class="pause-stats" id="pause-stats" hidden></div>
+    </div>
+  </section>
+
+  <!-- ===================== СТАТИСТИКА / РЕЗУЛЬТАТ ===================== -->
+  <section id="scr-result" class="screen screen-overlay" hidden>
+    <div class="result-box">
+      <div class="result-kicker" id="res-kicker">Финальный свисток</div>
+      <div class="result-score" id="res-score"></div>
+      <div class="result-scorers" id="res-scorers"></div>
+      <div class="result-stats" id="res-stats"></div>
+      <div class="result-extra" id="res-extra"></div>
+      <div class="result-actions" id="res-actions"></div>
+    </div>
+  </section>
+
+  <!-- Подтверждение -->
+  <div id="confirm" class="confirm" hidden>
+    <div class="confirm-box">
+      <p id="confirm-text"></p>
+      <div class="confirm-actions">
+        <button class="btn ghost" id="confirm-no">Отмена</button>
+        <button class="btn danger" id="confirm-yes">Да</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+</div>
+<noscript>Для игры нужен включённый JavaScript.</noscript>
+<script src="game.js"></script>
+</body>
+</html>
